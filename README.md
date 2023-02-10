@@ -7,4 +7,4 @@ Based on repository:
 
 Using:
 
-* [LibreHardwareMonitorLib] (https://github.com/LibreHardwareMonitor/LibreHardwareMonitor)
+* [LibreHardwareMonitorLib](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor)

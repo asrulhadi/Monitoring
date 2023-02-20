@@ -147,40 +147,40 @@ public class Measurement
     {
         try
         {
-            CpuPercentSensor.Hardware.Update();
-            CPUPercent = CpuPercentSensor.Value.Value;
+            CpuPercentSensor?.Hardware.Update();
+            CPUPercent = CpuPercentSensor is null ? 0 : CpuPercentSensor.Value.Value;
         }
         catch { /* ignored */ }
 
         try
         {
-            CpuTempSensor.Hardware.Update();
-            CPUTemp = CpuTempSensor.Value.Value;
+            CpuTempSensor?.Hardware.Update();
+            CPUTemp = CpuTempSensor is null ? 0 : CpuTempSensor.Value.Value;
         }
         catch { /* ignored */ }
 
         try
         {
-            GpuPercentSensor.Hardware.Update();
-            GPUPercent = GpuPercentSensor.Value.Value;
+            //GpuPercentSensor?.Hardware.Update();
+            //GPUPercent = GpuPercentSensor is null ? 0 : GpuPercentSensor.Value.Value;
         }
         catch { /* ignored */ }
 
         try
         {
-            GpuTempSensor.Hardware.Update();
-            GPUTemp = GpuTempSensor.Value.Value;
+            //GpuTempSensor?.Hardware.Update();
+            //GPUTemp = GpuTempSensor is null ? 0 : GpuTempSensor.Value.Value;
         }
         catch { /* ignored */ }
 
         try
         {
-            GpuRamUsedSensor.Hardware.Update();
-            GPUUsedRam = GpuRamUsedSensor.Value.Value;
+            //GpuRamUsedSensor?.Hardware.Update();
+            //GPUUsedRam = GpuRamUsedSensor is null ? 0 : GpuRamUsedSensor.Value.Value;
         }
         catch { /* ignored */ }
         
-        GPUPercentRam = GPUUsedRam / (GPUTotalRam / 100);
+        //GPUPercentRam = GPUUsedRam / (GPUTotalRam / 100);
 
         RamUpdate();
     }

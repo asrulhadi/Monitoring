@@ -19,7 +19,19 @@
 
     <StackPanel>
     <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-    <Button Content="Get Measurement" Command="{Binding GetMeasurement}" />
+    <Button Content="Get Measurement" Command="{Binding GetMeasurement}" CommandParameter="Start"/>
+    <Button Content="Stop Measurement" Command="{Binding GetMeasurement}" CommandParameter="Stop"/>
+
+    <ItemsRepeater Items="{Binding Graph}" MinWidth="200">
+        <ItemsRepeater.ItemTemplate>
+            <DataTemplate>
+                <Border Height="75" BorderBrush="Gray" BorderThickness="1" CornerRadius="10">
+                    <ContentControl Content="{Binding .}"/>
+                </Border>
+            </DataTemplate>
+        </ItemsRepeater.ItemTemplate>
+    </ItemsRepeater>
+
     </StackPanel>
 
 </Window>

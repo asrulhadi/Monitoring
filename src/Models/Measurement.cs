@@ -21,37 +21,49 @@ public class Measurement
         System.Console.WriteLine(pc.GetReport());
         SetSensors();
     }
-    public void GetMeasurement(out double load, out double ram)
+    public void GetMeasurement(out double load, out double ram, out double gpu)
     {
         System.Console.WriteLine("Hello from measurement");
         this.Update();
-        System.Console.WriteLine("CPU % {0}", CPUPercent.Count > 1 ? CPUPercent.Select(a => $"{a:N2}").Aggregate((a,b) => $"{a} {b}") : "");
-        System.Console.WriteLine("CPU Temp {0}", CPUTemp.Count > 1 ? CPUTemp.Select(a => $"{a:N2}").Aggregate((a,b) => $"{a} {b}") : "");
-        System.Console.WriteLine("GPU % {0}", GPUPercent);
-        System.Console.WriteLine("GPU Temp {0}", GPUTemp);
+        System.Console.WriteLine("CPU % {0}", CPUPercent.Count > 0 ? CPUPercent.Select(a => $"{a:N2}").Aggregate((a,b) => $"{a} {b}") : "");
         System.Console.WriteLine("Memory % {0:N2} => {1:N3}Gb/{2:N3}Gb", RamPercent, RamUsed, RamAvailable);
+        //System.Console.WriteLine("CPU Temp {0}", CPUTemp.Count > 1 ? CPUTemp.Select(a => $"{a:N2}").Aggregate((a,b) => $"{a} {b}") : "");
+        System.Console.WriteLine("GPU % {0}", GPUPercent.Count > 0 ? GPUPercent.Select(a => $"{a:N2}").Aggregate((a, b) => $"{a} {b}") : "");
+        for (int i = 0; i < GPUUsedRam.Count; i++)
+        {
+            if (GPUTotalRam.Count > i)
+            {
+                double total = Double.NaN;
+                double GPUPercentRamI = GPUUsedRam[i] / GPUTotalRam[i];
+                System.Console.WriteLine("GPU Memory % {0:N2} => {1:N3}Gb/{2:N3}Gb", GPUPercentRamI, GPUUsedRam[i], GPUTotalRam[i]);
+            }
+            else
+                System.Console.WriteLine("GPU Memory Used = {0:N3}Gb", GPUUsedRam[i]/1000.0);
+        }
+        //System.Console.WriteLine("GPU Temp {0}", GPUTemp);
         load = CPUPercent.Count == 0 ? 0 : CPUPercent[0];
         ram = RamPercent;
+        gpu = GPUPercent.Count > 0 ? GPUPercent.Max() : 0;
     }
 
     #region Code from https://github.com/FanIT/SysMonAvalonia/blob/main/Hardware/Computer.cs - modified
     private Computer pc;
     private List<ISensor> CpuPercentSensor = new();
     private List<ISensor> CpuTempSensor = new();
-    private ISensor GpuPercentSensor;
+    private List<ISensor> GpuPercentSensor = new();
     private ISensor GpuTempSensor;
-    private ISensor GpuRamUsedSensor;
+    private List<ISensor> GpuRamUsedSensor = new();
     private ISensor RamUsedSensor;
     private ISensor RamAvailableSensor;
     private ISensor RamLoadSensor;
 
     public List<float> CPUPercent { get; private set; } = new();
     public List<float> CPUTemp { get; private set; } = new();
-    public float GPUPercent { get; private set; } = 0;
+    public List<float> GPUPercent { get; private set; } = new();
     public float GPUTemp { get; private set; } = 0;
-    public float GPUTotalRam { get; private set; } = 0;
-    public float GPUUsedRam { get; private set; } = 0;
-    public float GPUPercentRam { get; private set; } = 0;
+    public List<float> GPUTotalRam { get; private set; } = new();
+    public List<float> GPUUsedRam { get; private set; } = new();
+    public List<float> GPUPercentRam { get; private set; } = new();
     public double RamAvailable { get; private set; } = 0;
     public double RamUsed { get; private set; } = 0;
     public double RamPercent { get; private set; } = 0;
@@ -89,41 +101,19 @@ public class Measurement
                 {
                     if (sensor.SensorType == SensorType.Load && sensor.Index == 0)
                     {
-                        GpuPercentSensor = sensor;
-                        GpuPercentSensor.ValuesTimeWindow = TimeSpan.Zero;
+                        GpuPercentSensor.Add(sensor);
+                        sensor.ValuesTimeWindow = TimeSpan.Zero;
                     }
                     if (sensor.SensorType == SensorType.Temperature)
                     {
                         GpuTempSensor = sensor;
                         GpuTempSensor.ValuesTimeWindow = TimeSpan.Zero;
                     }
-                    if (sensor.SensorType == SensorType.SmallData && sensor.Index == 2) GPUTotalRam = sensor.Value.Value;
+                    if (sensor.SensorType == SensorType.SmallData && sensor.Index == 2) GPUTotalRam.Add(sensor.Value.Value);
                     if (sensor.SensorType == SensorType.SmallData && sensor.Index == 1)
                     {
-                        GpuRamUsedSensor = sensor;
-                        GpuRamUsedSensor.ValuesTimeWindow = TimeSpan.Zero;
-                    }
-                }
-            }
-            if (hardware.HardwareType == HardwareType.GpuIntel)
-            {
-                foreach (ISensor sensor in hardware.Sensors)
-                {
-                    if (sensor.SensorType == SensorType.Load && sensor.Index == 0)
-                    {
-                        GpuPercentSensor = sensor;
-                        GpuPercentSensor.ValuesTimeWindow = TimeSpan.Zero;
-                    }
-                    if (sensor.SensorType == SensorType.Temperature)
-                    {
-                        GpuTempSensor = sensor;
-                        GpuTempSensor.ValuesTimeWindow = TimeSpan.Zero;
-                    }
-                    if (sensor.SensorType == SensorType.SmallData && sensor.Index == 2) GPUTotalRam = sensor?.Value ?? 0;
-                    if (sensor.SensorType == SensorType.SmallData && sensor.Index == 1)
-                    {
-                        GpuRamUsedSensor = sensor;
-                        GpuRamUsedSensor.ValuesTimeWindow = TimeSpan.Zero;
+                        sensor.ValuesTimeWindow = TimeSpan.Zero;
+                        GpuRamUsedSensor.Add(sensor);
                     }
                 }
             }
@@ -147,7 +137,18 @@ public class Measurement
 
         // intel gpu
         var intelGpu = pc.Hardware.Where(h => h.HardwareType == HardwareType.GpuIntel);
-        sensors = cpu.Where(c => c.Sensors.Length > 0).SelectMany(c => c.Sensors, (_, s) => s);
+        sensors = intelGpu.Where(c => c.Sensors.Length > 0).SelectMany(c => c.Sensors, (_, s) => s);
+        GpuPercentSensor.AddRange(
+            sensors.Where(s => s is not null)
+            .Where(s => s.SensorType == SensorType.Load)
+            .OrderBy(s => s.Index)
+            );
+        GpuRamUsedSensor.AddRange(
+            sensors.Where(s => s is not null)
+            .Where(s => s.SensorType == SensorType.SmallData)
+            .Where(s => s.Name.Contains("Memory Used"))
+            .OrderBy(s => s.Index)
+            );
 
         // Memory
         var memory = pc.Hardware.Where(h => h.HardwareType == HardwareType.Memory);
@@ -158,9 +159,10 @@ public class Measurement
 
     public void Update()
     {
+        pc.Hardware.ToList().ForEach(h => h.Update());
         try
         {
-            pc.Hardware.Where(h => h.HardwareType == HardwareType.Cpu).ToList().ForEach(h => h.Update());
+            //pc.Hardware.Where(h => h.HardwareType == HardwareType.Cpu).ToList().ForEach(h => h.Update());
 
             CPUPercent.Clear();
             CPUPercent.AddRange(CpuPercentSensor?.OrderBy(s => s.Index).Select(s => s.Value ?? 0) ?? Array.Empty<float>());
@@ -172,13 +174,15 @@ public class Measurement
 
         try
         {
-            //GpuPercentSensor?.Hardware.Update();
-            //GPUPercent = GpuPercentSensor is null ? 0 : GpuPercentSensor.Value.Value;
-        }
-        catch { /* ignored */ }
+            //pc.Hardware.Where(h => h.HardwareType == HardwareType.GpuIntel).ToList().ForEach(h => h.Update());
 
-        try
-        {
+            GPUPercent.Clear();
+            GPUPercent.AddRange(GpuPercentSensor?.OrderBy(s => s.Index).Select(s => s.Value ?? 0) ?? Array.Empty<float>());
+
+            GPUUsedRam.Clear();
+            GPUUsedRam.AddRange(GpuRamUsedSensor?.OrderBy(s => s.Index).Select(s => s.Value ?? 0) ?? Array.Empty<float>());
+
+            GPUPercentRam.Clear();
             //GpuTempSensor?.Hardware.Update();
             //GPUTemp = GpuTempSensor is null ? 0 : GpuTempSensor.Value.Value;
         }
@@ -193,21 +197,21 @@ public class Measurement
 
         try
         {
-            RamUsedSensor?.Hardware.Update();
+            //RamUsedSensor?.Hardware.Update();
             RamUsed = RamUsedSensor?.Value ?? 0;
         }
         catch { /* ignored */ }
 
         try
         {
-            RamAvailableSensor?.Hardware.Update();
+            //RamAvailableSensor?.Hardware.Update();
             RamAvailable = RamAvailableSensor?.Value ?? 0;
         }
         catch { /* ignored */ }
 
         try
         {
-            RamLoadSensor?.Hardware.Update();
+            //RamLoadSensor?.Hardware.Update();
             RamPercent = RamLoadSensor?.Value ?? 0;
         }
         catch { /* ignored */ }

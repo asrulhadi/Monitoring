@@ -35,8 +35,8 @@ public class MainWindowViewModel : ViewModelBase
                                 .SubscribeOn(RxApp.MainThreadScheduler)
                                 .Subscribe(_ =>
                                 {
-                                    measurement.GetMeasurement(out double load, out double ram);
-                                    Graph[0].AddData(load, ram);
+                                    measurement.GetMeasurement(out double load, out double ram, out double gpu);
+                                    Graph[0].AddData(load, ram, gpu);
                                     // Graph[0].AddData(ram);
                                     // Graph[1].AddData(load);
                                 }),

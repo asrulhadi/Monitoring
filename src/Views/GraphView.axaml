@@ -8,7 +8,7 @@
              x:CompileBindings="true" x:DataType="vm:GraphViewModel"
              x:Class="Monitoring.Views.GraphView"
              >
-  <Grid RowDefinitions="*" ColumnDefinitions="Auto,*,*,Auto">
+  <Grid RowDefinitions="*" ColumnDefinitions="Auto,*,*,*,Auto">
     <Grid.Styles>
       <Style Selector="lvc|CartesianChart">
         <Setter Property="DrawMargin" Value="{Binding Margin}" />
@@ -19,6 +19,7 @@
     <Label Grid.Column="0" Content="{Binding Nama}" VerticalContentAlignment="Center"/>
     <lvc:CartesianChart Grid.Column="1" XAxes="{Binding XAxes}" YAxes="{Binding YAxes}" Series="{Binding CpuLoad}" ></lvc:CartesianChart>
     <lvc:CartesianChart Grid.Column="2" XAxes="{Binding XAxes}" YAxes="{Binding YAxes}" Series="{Binding RamLoad}" ></lvc:CartesianChart>
-    <Label Grid.Column="3" Content="End" VerticalContentAlignment="Center"/>
+    <lvc:CartesianChart Grid.Column="3" XAxes="{Binding XAxes}" YAxes="{Binding YAxes}" Series="{Binding GpuLoad}" ></lvc:CartesianChart>
+    <Label Grid.Column="4" Content="End" VerticalContentAlignment="Center"/>
   </Grid>
 </UserControl>

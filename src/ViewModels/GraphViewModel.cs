@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -13,11 +14,15 @@ namespace Monitoring.ViewModels;
 
 public partial class GraphViewModel: ObservableObject
 {
+    public int MaxData = 30;
     [ObservableProperty] public string nama = "";
     public ObservableCollection<ISeries> CpuLoad { get; set; }
     public ObservableCollection<ISeries> RamLoad { get; set; }
+    public ObservableCollection<ISeries> GpuLoad { get; set; }
+    private List<ObservableCollection<ObservableValue>> loadList = new();
     private ObservableCollection<ObservableValue> cpuLoad { get; } = new();
     private ObservableCollection<ObservableValue> ramLoad { get; } = new();
+    private ObservableCollection<ObservableValue> gpuLoad { get; } = new();
     public GraphViewModel(string name)
     {
         Nama = name;
@@ -37,6 +42,7 @@ public partial class GraphViewModel: ObservableObject
                 Padding = 0,
             }
         };
+        loadList.Add(cpuLoad);
         RamLoad = new ObservableCollection<ISeries>
         {
             new ColumnSeries<ObservableValue>
@@ -49,17 +55,32 @@ public partial class GraphViewModel: ObservableObject
                 Padding = 0,
             }
         };
+        loadList.Add(ramLoad);
+        GpuLoad = new ObservableCollection<ISeries>
+        {
+            new ColumnSeries<ObservableValue>
+            {
+                Name = "GPU Load",
+                Values = gpuLoad,
+                Fill = gradient,
+                Stroke = null,
+                MaxBarWidth = double.MaxValue,
+                Padding = 0,
+            }
+        };
+        loadList.Add(gpuLoad);
     }
-
-    public void AddData(double cpuload, double ramload)
+    /// <summary>
+    /// Value of data
+    /// </summary>
+    /// <param name="load">cpu load, ram load, gpu load</param>
+    public void AddData(params double[] load)
     {
-        // only maintain 20 data
-        if (cpuLoad.Count > 20) cpuLoad.RemoveAt(0);
-        cpuLoad.Add(new(cpuload));
-
-        // only maintain 20 data
-        if (ramLoad.Count > 20) ramLoad.RemoveAt(0);
-        ramLoad.Add(new(ramload));
+        for (int i=load.Length-1; i>=0; i--) 
+        {
+            if (loadList[i].Count > MaxData) loadList[i].RemoveAt(0);
+            loadList[i].Add(new(load[i]));
+        }
     }
     public Axis[] YAxes { get; set; }
         = new Axis[]
